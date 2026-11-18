@@ -12,6 +12,8 @@ L’hébergement Netlify et l’inférence dans le navigateur ne requièrent pas
 
 Les fonctions Netlify sont appelables depuis l’URL publique du site : les clés ne sont pas visibles dans le navigateur, mais les visiteurs peuvent consommer les quotas des API. Vérifie les limites de tes clés avant de partager le site.
 
+En mode debug avec Android Studio/Edge, l’application appelle les API directement et utilise les clés locales fournies à Flutter. La compilation Netlify active les fonctions serveur, pour ne pas inclure les clés dans le site publié.
+
 ## Application mobile Android
 
 Android continue d’utiliser le service YOLO FastAPI du dépôt

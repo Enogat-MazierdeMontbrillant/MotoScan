@@ -11,6 +11,7 @@ class MotoApi {
   final String geminiKey;
   final String ninjasKey;
   final String detectionUrl;
+  static const utiliserFonctionsNetlify = bool.fromEnvironment('USE_NETLIFY_FUNCTIONS');
   static const modeleIA = String.fromEnvironment(
     'GEMINI_MODEL',
     defaultValue: 'gemini-3.5-flash-lite',
@@ -68,7 +69,7 @@ class MotoApi {
 
   // Gemini propose une marque et un modèle, jamais des caractéristiques.
   Future<Map<String, dynamic>> identifier(Uint8List photo, String mime) async {
-    if (!kIsWeb && geminiKey.isEmpty) {
+    if ((!kIsWeb || !utiliserFonctionsNetlify) && geminiKey.isEmpty) {
       throw Exception('Configure GEMINI_API_KEY puis relance l’application.');
     }
     final consigne = {
@@ -84,14 +85,14 @@ class MotoApi {
     };
     final reponse = await client
         .post(
-          kIsWeb
+          kIsWeb && utiliserFonctionsNetlify
               ? Uri.base.resolve('/.netlify/functions/gemini')
               : Uri.parse(
                   'https://generativelanguage.googleapis.com/v1beta/models/$modeleIA:generateContent',
                 ),
           headers: {
             'Content-Type': 'application/json',
-            if (!kIsWeb) 'x-goog-api-key': geminiKey,
+            if (!kIsWeb || !utiliserFonctionsNetlify) 'x-goog-api-key': geminiKey,
           },
           body: jsonEncode({
             'contents': [
@@ -127,11 +128,11 @@ class MotoApi {
 
   // Les fiches proviennent de la base API Ninjas.
   Future<List<dynamic>> chercher(String marque, String modele, String annee) async {
-    if (!kIsWeb && ninjasKey.isEmpty) {
+    if ((!kIsWeb || !utiliserFonctionsNetlify) && ninjasKey.isEmpty) {
       throw Exception('Configure NINJAS_API_KEY puis relance l’application.');
     }
     late final http.Request requete;
-    if (kIsWeb) {
+    if (kIsWeb && utiliserFonctionsNetlify) {
       requete = http.Request('POST', Uri.base.resolve('/.netlify/functions/ninjas'))
         ..headers['Content-Type'] = 'application/json'
         ..body = jsonEncode({
