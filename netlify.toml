@@ -1,0 +1,15 @@
+[build]
+  command = "flutter build web --release"
+  publish = "build/web"
+  functions = "netlify/functions"
+
+[[plugins]]
+  package = "netlify-plugin-flutter"
+
+  [plugins.inputs]
+    channel = "3.47.7"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

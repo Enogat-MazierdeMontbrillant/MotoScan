@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'moto_detector_stub.dart'
+    if (dart.library.js_interop) 'moto_detector_web.dart' as browser_detector;
 
-// Les clés sont lues dans cles.json au lancement
+// Les clés mobiles sont passées au build; le web passe par les fonctions Netlify.
 class MotoApi {
   final http.Client client;
   final String geminiKey;
@@ -22,6 +24,7 @@ class MotoApi {
   });
 
   Future<bool> verifierMoto(Uint8List photo, String mime) async {
+    if (kIsWeb) return browser_detector.verifierMoto(photo, mime);
     final hote = detectionUrl.trim().isNotEmpty
         ? detectionUrl.trim()
         : defaultTargetPlatform == TargetPlatform.android
@@ -65,8 +68,8 @@ class MotoApi {
 
   // Gemini propose une marque et un modèle, jamais des caractéristiques.
   Future<Map<String, dynamic>> identifier(Uint8List photo, String mime) async {
-    if (geminiKey.isEmpty) {
-      throw Exception('Ajoute la clé Gemini dans cles.json puis relance l’application.');
+    if (!kIsWeb && geminiKey.isEmpty) {
+      throw Exception('Configure GEMINI_API_KEY puis relance l’application.');
     }
     final consigne = {
       'text':
@@ -81,10 +84,15 @@ class MotoApi {
     };
     final reponse = await client
         .post(
-          Uri.parse(
-            'https://generativelanguage.googleapis.com/v1beta/models/$modeleIA:generateContent',
-          ),
-          headers: {'Content-Type': 'application/json', 'x-goog-api-key': geminiKey},
+          kIsWeb
+              ? Uri.base.resolve('/.netlify/functions/gemini')
+              : Uri.parse(
+                  'https://generativelanguage.googleapis.com/v1beta/models/$modeleIA:generateContent',
+                ),
+          headers: {
+            'Content-Type': 'application/json',
+            if (!kIsWeb) 'x-goog-api-key': geminiKey,
+          },
           body: jsonEncode({
             'contents': [
               {
@@ -119,19 +127,32 @@ class MotoApi {
 
   // Les fiches proviennent de la base API Ninjas.
   Future<List<dynamic>> chercher(String marque, String modele, String annee) async {
-    if (ninjasKey.isEmpty) {
-      throw Exception('Ajoute la clé API Ninjas dans cles.json puis relance l’application.');
+    if (!kIsWeb && ninjasKey.isEmpty) {
+      throw Exception('Configure NINJAS_API_KEY puis relance l’application.');
     }
-    final reponse = await client
-        .get(
-          Uri.https('api.api-ninjas.com', '/v1/motorcycles', {
-            'make': marque.trim(),
-            'model': modele.trim(),
-            if (annee.trim().isNotEmpty) 'year': annee.trim(),
-          }),
-          headers: {'X-Api-Key': ninjasKey},
-        )
-        .timeout(const Duration(seconds: 25));
+    late final http.Request requete;
+    if (kIsWeb) {
+      requete = http.Request('POST', Uri.base.resolve('/.netlify/functions/ninjas'))
+        ..headers['Content-Type'] = 'application/json'
+        ..body = jsonEncode({
+          'make': marque.trim(),
+          'model': modele.trim(),
+          if (annee.trim().isNotEmpty) 'year': annee.trim(),
+        });
+    } else {
+      requete =
+          http.Request(
+              'GET',
+              Uri.https('api.api-ninjas.com', '/v1/motorcycles', {
+                'make': marque.trim(),
+                'model': modele.trim(),
+                if (annee.trim().isNotEmpty) 'year': annee.trim(),
+              }),
+            )
+            ..headers['X-Api-Key'] = ninjasKey;
+    }
+    final flux = await client.send(requete).timeout(const Duration(seconds: 25));
+    final reponse = await http.Response.fromStream(flux).timeout(const Duration(seconds: 15));
     final donnees = lireReponse(reponse, 'API Ninjas');
     if (donnees is! List || donnees.any((moto) => moto is! Map)) {
       throw const FormatException();

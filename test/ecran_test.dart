@@ -56,7 +56,7 @@ void main() {
     await tester.ensureVisible(recherche);
     await tester.tap(recherche);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Ajoute la clé API Ninjas'), findsOneWidget);
+    expect(find.textContaining('Configure NINJAS_API_KEY'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(
       tester

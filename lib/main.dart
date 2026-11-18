@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -78,8 +79,9 @@ class _AccueilState extends State<Accueil> {
       annee.clear();
       motos = [];
       if (mounted) setState(() {});
-      if (await fichier.length() > 5 * 1024 * 1024) {
-        throw Exception('Choisis une photo de moins de 5 Mo.');
+      final limiteMo = kIsWeb ? 4 : 5;
+      if (await fichier.length() > limiteMo * 1024 * 1024) {
+        throw Exception('Choisis une photo de moins de $limiteMo Mo.');
       }
       final octets = await fichier.readAsBytes();
       final type = lookupMimeType(fichier.name, headerBytes: octets);
@@ -203,9 +205,11 @@ class _AccueilState extends State<Accueil> {
               onPressed: chargement || photo == null ? null : identifier,
               child: const Text('Identifier la moto'),
             ),
-            const Text(
-              'Chaque image est d’abord vérifiée par le détecteur de motos.',
-              style: TextStyle(fontSize: 12),
+            Text(
+              kIsWeb
+                  ? 'Vérification dans le navigateur ; l’identification envoie la photo à Gemini.'
+                  : 'La photo est vérifiée par le détecteur, puis envoyée à Gemini pour identification.',
+              style: const TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 16),
             const Text(

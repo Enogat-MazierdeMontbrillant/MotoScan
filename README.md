@@ -1,23 +1,23 @@
 # MotoScan
 
-## Détection des motos
+## Déploiement gratuit sur Netlify
 
-La caméra et la galerie utilisent le détecteur YOLO FastAPI du dépôt
+L’application web exécute YOLO dans le navigateur : aucun conteneur Docker ni serveur de détection n’est nécessaire. Le modèle ONNX (environ 13 Mo) et ONNX Runtime sont téléchargés depuis des CDN publics lors de la première détection. La photo utilisée pour vérifier la présence d’une moto reste dans le navigateur ; elle n’est envoyée à Gemini que si l’utilisateur demande ensuite l’identification.
+
+1. Dans Netlify, importe le dépôt GitHub `Enogat-MazierdeMontbrillant/MotoScan`. La configuration de compilation est déjà dans `netlify.toml`.
+2. Dans les variables d’environnement Netlify, ajoute `GEMINI_API_KEY` et `NINJAS_API_KEY`, avec le scope **Functions**. Les clés restent côté serveur dans les fonctions Netlify et ne sont pas incluses dans le code JavaScript public.
+3. Lance le déploiement. Netlify compile Flutter Web et publie aussi les fonctions qui relaient les requêtes vers Gemini et API Ninjas.
+
+L’hébergement Netlify et l’inférence dans le navigateur ne requièrent pas de serveur Docker payant, sous réserve des limites de l’offre gratuite. Gemini et API Ninjas nécessitent leurs propres clés et restent soumis aux quotas et conditions de leurs fournisseurs.
+
+## Application mobile Android
+
+Android continue d’utiliser le service YOLO FastAPI du dépôt
 [Object_detection_fastAPI_docker](https://github.com/enesagu/Object_detection_fastAPI_docker).
-L’image n’est acceptée dans l’application que si le détecteur y trouve une moto.
-
-Démarre le service depuis ce dossier avec Docker Desktop ouvert :
+Démarre-le avec Docker Desktop :
 
 ```powershell
 docker compose up --build -d
 ```
 
-Le premier démarrage construit le conteneur et peut prendre quelques minutes. Pour
-l’arrêter : `docker compose down`.
-
-Par défaut, l’application Android vise le service du PC via `10.0.2.2:8000`
-(adresse hôte utilisée par l’émulateur Android). Pour utiliser un téléphone
-physique, remplace `127.0.0.1:8000:8000` par `8000:8000` dans
-`docker-compose.yml`, autorise le port 8000 dans le pare-feu, ajoute l’adresse IP
-locale du PC dans `android/app/src/main/res/xml/network_security_config.xml`, puis
-lance l’application avec `--dart-define=MOTO_DETECTION_URL=http://IP_DU_PC:8000`.
+Arrête-le avec `docker compose down`. L’émulateur Android accède au service du PC via `10.0.2.2:8000`. Pour un téléphone physique, configure l’adresse IP locale du PC dans `MOTO_DETECTION_URL`, publie le port 8000 sur le réseau local et autorise-le dans le pare-feu.
