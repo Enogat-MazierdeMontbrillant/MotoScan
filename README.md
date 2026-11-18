@@ -10,6 +10,8 @@ L’application web exécute YOLO dans le navigateur : aucun conteneur Docker ni
 
 L’hébergement Netlify et l’inférence dans le navigateur ne requièrent pas de serveur Docker payant, sous réserve des limites de l’offre gratuite. Gemini et API Ninjas nécessitent leurs propres clés et restent soumis aux quotas et conditions de leurs fournisseurs.
 
+Les fonctions Netlify sont appelables depuis l’URL publique du site : les clés ne sont pas visibles dans le navigateur, mais les visiteurs peuvent consommer les quotas des API. Vérifie les limites de tes clés avant de partager le site.
+
 ## Application mobile Android
 
 Android continue d’utiliser le service YOLO FastAPI du dépôt
