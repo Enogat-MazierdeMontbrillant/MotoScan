@@ -1,0 +1,7 @@
+services:
+  detecteur-moto:
+    build:
+      context: https://github.com/enesagu/Object_detection_fastAPI_docker.git#9aaca6063fca31719143e882b81ca3a04cacd252:Object_Detection_Yolo_with_FastAPI
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
